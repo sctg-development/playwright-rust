@@ -3,14 +3,14 @@ use crate::imp::{
     core::*,
     page::Page,
     prelude::*,
-    utils::{Cookie, Geolocation, Header, StorageState}
+    utils::{Cookie, Geolocation, Header, StorageState},
 };
 
 #[derive(Debug)]
 pub(crate) struct BrowserContext {
     channel: ChannelOwner,
     var: Mutex<Variable>,
-    tx: Mutex<Option<broadcast::Sender<Evt>>>
+    tx: Mutex<Option<broadcast::Sender<Evt>>>,
 }
 
 #[derive(Debug, Default)]
@@ -18,7 +18,7 @@ pub(crate) struct Variable {
     browser: Option<Weak<Browser>>,
     pages: Vec<Weak<Page>>,
     timeout: Option<u32>,
-    navigation_timeout: Option<u32>
+    navigation_timeout: Option<u32>,
 }
 
 impl BrowserContext {
@@ -28,7 +28,7 @@ impl BrowserContext {
         let Initializer {} = serde_json::from_value(channel.initializer.clone())?;
         let browser = match &channel.parent {
             Some(RemoteWeak::Browser(b)) => Some(b.clone()),
-            _ => None
+            _ => None,
         };
         let var = Mutex::new(Variable {
             browser,
@@ -37,7 +37,7 @@ impl BrowserContext {
         Ok(Self {
             channel,
             var,
-            tx: Mutex::default()
+            tx: Mutex::default(),
         })
     }
 
@@ -68,7 +68,7 @@ impl BrowserContext {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Args<'a> {
-            urls: &'a [String]
+            urls: &'a [String],
         }
         let args = Args { urls };
         let v = send_message!(self, "cookies", args);
@@ -81,7 +81,7 @@ impl BrowserContext {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Args<'a> {
-            cookies: &'a [Cookie]
+            cookies: &'a [Cookie],
         }
         let args = Args { cookies };
         let _ = send_message!(self, "addCookies", args);
@@ -91,18 +91,18 @@ impl BrowserContext {
     pub(crate) async fn grant_permissions(
         &self,
         permissions: &[String],
-        origin: Option<&str>
+        origin: Option<&str>,
     ) -> ArcResult<()> {
         #[skip_serializing_none]
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Args<'a, 'b> {
             permissions: &'a [String],
-            origin: Option<&'b str>
+            origin: Option<&'b str>,
         }
         let args = Args {
             permissions,
-            origin
+            origin,
         };
         let _ = send_message!(self, "grantPermissions", args);
         Ok(())
@@ -118,7 +118,7 @@ impl BrowserContext {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Args<'a> {
-            geolocation: Option<&'a Geolocation>
+            geolocation: Option<&'a Geolocation>,
         }
         let args = Args { geolocation };
         let _ = send_message!(self, "setGeolocation", args);
@@ -141,15 +141,15 @@ impl BrowserContext {
 
     pub(crate) async fn set_extra_http_headers<T>(&self, headers: T) -> ArcResult<()>
     where
-        T: IntoIterator<Item = (String, String)>
+        T: IntoIterator<Item = (String, String)>,
     {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Args {
-            headers: Vec<Header>
+            headers: Vec<Header>,
         }
         let args = Args {
-            headers: headers.into_iter().map(Header::from).collect()
+            headers: headers.into_iter().map(Header::from).collect(),
         };
         let _ = send_message!(self, "setExtraHTTPHeaders", args);
         Ok(())
@@ -176,9 +176,13 @@ impl BrowserContext {
         self.var.lock().unwrap().browser = Some(browser);
     }
 
-    pub(crate) fn pages(&self) -> Vec<Weak<Page>> { self.var.lock().unwrap().pages.clone() }
+    pub(crate) fn pages(&self) -> Vec<Weak<Page>> {
+        self.var.lock().unwrap().pages.clone()
+    }
 
-    pub(super) fn push_page(&self, p: Weak<Page>) { self.var.lock().unwrap().pages.push(p); }
+    pub(super) fn push_page(&self, p: Weak<Page>) {
+        self.var.lock().unwrap().pages.push(p);
+    }
 
     pub(super) fn remove_page(&self, page: &Weak<Page>) {
         let pages = &mut self.var.lock().unwrap().pages;
@@ -220,7 +224,7 @@ impl BrowserContext {
     fn on_close(&self, ctx: &Context) -> Result<(), Error> {
         let browser = match self.browser().and_then(|b| b.upgrade()) {
             None => return Ok(()),
-            Some(b) => b
+            Some(b) => b,
         };
         let this = get_object!(ctx, self.guid(), BrowserContext)?;
         browser.remove_context(&this);
@@ -235,14 +239,18 @@ impl BrowserContext {
 }
 
 impl RemoteObject for BrowserContext {
-    fn channel(&self) -> &ChannelOwner { &self.channel }
-    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+    fn channel(&self) -> &ChannelOwner {
+        &self.channel
+    }
+    fn channel_mut(&mut self) -> &mut ChannelOwner {
+        &mut self.channel
+    }
 
     fn handle_event(
         &self,
         ctx: &Context,
         method: Str<Method>,
-        params: Map<String, Value>
+        params: Map<String, Value>,
     ) -> Result<(), Error> {
         match method.as_str() {
             "page" => {
@@ -264,21 +272,25 @@ impl RemoteObject for BrowserContext {
 #[derive(Debug, Clone)]
 pub(crate) enum Evt {
     Close,
-    Page(Weak<Page>)
+    Page(Weak<Page>),
 }
 
 impl EventEmitter for BrowserContext {
     type Event = Evt;
 
-    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> { self.tx.lock().unwrap().clone() }
+    fn tx(&self) -> Option<broadcast::Sender<Self::Event>> {
+        self.tx.lock().unwrap().clone()
+    }
 
-    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) { *self.tx.lock().unwrap() = Some(tx); }
+    fn set_tx(&self, tx: broadcast::Sender<Self::Event>) {
+        *self.tx.lock().unwrap() = Some(tx);
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum EventType {
     Close,
-    Page
+    Page,
 }
 
 impl IsEvent for Evt {
@@ -287,7 +299,7 @@ impl IsEvent for Evt {
     fn event_type(&self) -> Self::EventType {
         match self {
             Self::Close => EventType::Close,
-            Self::Page(_) => EventType::Page
+            Self::Page(_) => EventType::Page,
         }
     }
 }
@@ -303,7 +315,7 @@ mod tests {
 
     crate::runtime_test!(storage_state, {
         let driver = Driver::install().unwrap();
-        let conn = Connection::run(&driver.executable()).unwrap();
+        let conn = Connection::run(&driver).unwrap();
         let p = Playwright::wait_initial_object(&conn).await.unwrap();
         let p = p.upgrade().unwrap();
         let chromium = p.chromium().upgrade().unwrap();

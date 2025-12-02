@@ -3,7 +3,7 @@ use std::{
     convert::TryInto,
     io,
     io::{Read, Write},
-    process::{ChildStdin, ChildStdout}
+    process::{ChildStdin, ChildStdout},
 };
 use thiserror::Error;
 
@@ -11,12 +11,12 @@ use thiserror::Error;
 pub(super) struct Reader {
     stdout: ChildStdout,
     length: Option<u32>,
-    buf: Vec<u8>
+    buf: Vec<u8>,
 }
 
 #[derive(Debug)]
 pub(super) struct Writer {
-    stdin: ChildStdin
+    stdin: ChildStdin,
 }
 
 #[derive(Error, Debug)]
@@ -24,7 +24,7 @@ pub enum TransportError {
     #[error(transparent)]
     Serde(#[from] serde_json::error::Error),
     #[error(transparent)]
-    Io(#[from] io::Error)
+    Io(#[from] io::Error),
 }
 
 impl Reader {
@@ -34,7 +34,7 @@ impl Reader {
         Self {
             stdout,
             length: None,
-            buf: Vec::with_capacity(Self::BUFSIZE)
+            buf: Vec::with_capacity(Self::BUFSIZE),
         }
     }
 
@@ -53,8 +53,16 @@ impl Reader {
                 Some(l) if this.buf.len() < l => {}
                 Some(l) => {
                     let bytes: &[u8] = &this.buf[..l];
-                    log::debug!("RECV {}", unsafe { std::str::from_utf8_unchecked(bytes) });
-                    let msg: Res = serde_json::from_slice(bytes)?;
+                    let raw_str = unsafe { std::str::from_utf8_unchecked(bytes) };
+                    log::debug!("RECV {}", raw_str);
+                    let msg: Res = match serde_json::from_slice(bytes) {
+                        Ok(m) => m,
+                        Err(e) => {
+                            // Log the raw message when deserialization fails
+                            eprintln!("DESER ERROR: {} for msg: {}", e, raw_str);
+                            return Err(e.into());
+                        }
+                    };
                     this.length = None;
                     this.buf = this.buf[l..].to_owned();
                     return Ok(Some(msg));
@@ -71,7 +79,9 @@ impl Reader {
 }
 
 impl Writer {
-    pub(super) fn new(stdin: ChildStdin) -> Self { Self { stdin } }
+    pub(super) fn new(stdin: ChildStdin) -> Self {
+        Self { stdin }
+    }
 
     pub(super) fn send(&mut self, req: &Req<'_, '_>) -> Result<(), TransportError> {
         log::debug!("SEND {:?}", &req);

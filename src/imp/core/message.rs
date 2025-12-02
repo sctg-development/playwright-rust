@@ -14,7 +14,10 @@ pub(crate) struct Req<'a, 'b> {
     #[serde(default)]
     pub(crate) method: &'b S<Method>,
     #[serde(default)]
-    pub(crate) params: Map<String, Value>
+    pub(crate) params: Map<String, Value>,
+    /// Metadata is required by Playwright 1.50+
+    #[serde(default)]
+    pub(crate) metadata: Map<String, Value>
 }
 
 #[derive(Debug, Deserialize, Clone)]

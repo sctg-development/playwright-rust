@@ -352,7 +352,7 @@ impl<'a> FillArgs<'a> {
     pub(crate) fn new(value: &'a str) -> Self {
         Self {
             value,
-            timeout: None,
+            timeout: Some(30000.0),
             no_wait_after: None
         }
     }
@@ -375,7 +375,7 @@ macro_rules! type_args {
                 Self {
                     $f,
                     delay: None,
-                    timeout: None,
+                    timeout: Some(30000.0),
                     no_wait_after: None
                 }
             }
@@ -411,7 +411,7 @@ impl<'a> WaitForSelectorArgs<'a> {
         Self {
             selector,
             state: None,
-            timeout: None
+            timeout: Some(30000.0)
         }
     }
 }

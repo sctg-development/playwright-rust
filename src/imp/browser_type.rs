@@ -207,7 +207,7 @@ impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
             handle_sigint: None,
             handle_sigterm: None,
             handle_sighup: None,
-            timeout: None,
+            timeout: Some(30000.0),
             env: None,
             headless: None,
             devtools: None,
@@ -255,7 +255,7 @@ impl<'a> ConnectArgs<'a> {
     pub(crate) fn new(ws_endpoint: &'a str) -> Self {
         Self {
             ws_endpoint,
-            timeout: None,
+            timeout: Some(30000.0),
             slowmo: None
         }
     }
@@ -280,7 +280,7 @@ impl<'a> ConnectOverCdpArgs<'a> {
             sdk_language: "rust",
             endpoint_url,
             headers: None,
-            timeout: None,
+            timeout: Some(30000.0),
             slowmo: None
         }
     }
@@ -293,7 +293,7 @@ mod tests {
 
     crate::runtime_test!(launch, {
         let driver = Driver::install().unwrap();
-        let conn = Connection::run(&driver.executable()).unwrap();
+        let conn = Connection::run(&driver).unwrap();
         let p = Playwright::wait_initial_object(&conn).await.unwrap();
         let p = p.upgrade().unwrap();
         let chromium = p.chromium().upgrade().unwrap();
@@ -304,7 +304,7 @@ mod tests {
 
     crate::runtime_test!(typo, {
         let driver = Driver::install().unwrap();
-        let conn = Connection::run(&driver.executable()).unwrap();
+        let conn = Connection::run(&driver).unwrap();
         let p = Playwright::wait_initial_object(&conn).await.unwrap();
         let p = p.upgrade().unwrap();
         let chromium = p.chromium().upgrade().unwrap();

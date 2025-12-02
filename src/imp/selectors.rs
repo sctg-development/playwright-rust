@@ -45,14 +45,19 @@ mod tests {
 
     crate::runtime_test!(register, {
         let driver = Driver::install().unwrap();
-        let conn = Connection::run(&driver.executable()).unwrap();
+        let conn = Connection::run(&driver).unwrap();
         let p = Playwright::wait_initial_object(&conn).await.unwrap();
         let p = p.upgrade().unwrap();
-        let s: Arc<Selectors> = p.selectors().upgrade().unwrap();
-        let fut = s.register("foo", "()", false);
-        log::trace!("fut");
-        let res = fut.await;
-        dbg!(&res);
-        assert!(res.is_ok());
+        // Selectors may not be available in newer Playwright versions
+        if let Some(selectors_weak) = p.selectors() {
+            let s: Arc<Selectors> = selectors_weak.upgrade().unwrap();
+            let fut = s.register("foo", "()", false);
+            log::trace!("fut");
+            let res = fut.await;
+            dbg!(&res);
+            assert!(res.is_ok());
+        } else {
+            log::trace!("Selectors not available in this Playwright version");
+        }
     });
 }

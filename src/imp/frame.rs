@@ -610,7 +610,7 @@ impl<'a> GotoArgs<'a, '_> {
     pub(crate) fn new(url: &'a str) -> Self {
         Self {
             url,
-            timeout: None,
+            timeout: Some(30000.0),
             wait_until: None,
             referer: None
         }
@@ -644,7 +644,7 @@ impl<'a> ClickArgs<'a> {
             button: None,
             /// Is ignored if dblclick
             click_count: None,
-            timeout: None,
+            timeout: Some(30000.0),
             force: None,
             no_wait_after: None,
             trial: None
@@ -665,7 +665,7 @@ impl<'a> WaitForSelectorArgs<'a> {
     pub(crate) fn new(selector: &'a str) -> Self {
         Self {
             selector,
-            timeout: None,
+            timeout: Some(30000.0),
             state: None
         }
     }
@@ -698,7 +698,7 @@ macro_rules! type_args {
                     selector,
                     $f,
                     delay: None,
-                    timeout: None,
+                    timeout: Some(30000.0),
                     no_wait_after: None
                 }
             }
@@ -727,7 +727,7 @@ impl<'a> HoverArgs<'a> {
             selector,
             modifiers: None,
             position: None,
-            timeout: None,
+            timeout: Some(30000.0),
             force: None,
             trial: None
         }
@@ -747,7 +747,7 @@ impl<'a> SetContentArgs<'a> {
     pub(crate) fn new(html: &'a str) -> Self {
         Self {
             html,
-            timeout: None,
+            timeout: Some(30000.0),
             wait_until: None
         }
     }
@@ -772,7 +772,7 @@ impl<'a> TapArgs<'a> {
             selector,
             modifiers: None,
             position: None,
-            timeout: None,
+            timeout: Some(30000.0),
             force: None,
             no_wait_after: None,
             trial: None
@@ -795,7 +795,7 @@ impl<'a, 'b> FillArgs<'a, 'b> {
         Self {
             selector,
             value,
-            timeout: None,
+            timeout: Some(30000.0),
             no_wait_after: None
         }
     }
@@ -826,7 +826,7 @@ impl<'a> CheckArgs<'a> {
         Self {
             selector,
             position: None,
-            timeout: None,
+            timeout: Some(30000.0),
             force: None,
             no_wait_after: None,
             trial: None
@@ -872,7 +872,7 @@ impl<'a> SelectOptionArgs<'a> {
             selector,
             options: None,
             elements: None,
-            timeout: None,
+            timeout: Some(30000.0),
             no_wait_after: None
         }
     }
@@ -894,7 +894,7 @@ impl<'a> SetInputFilesArgs<'a> {
         Self {
             selector,
             files: Vec::new(),
-            timeout: None,
+            timeout: Some(30000.0),
             no_wait_after: None
         }
     }
@@ -932,7 +932,7 @@ impl<'a> WaitForFunctionArgs<'a> {
     pub(crate) fn new(expression: &'a str) -> Self {
         Self {
             expression,
-            timeout: None,
+            timeout: Some(30000.0),
             polling: None,
             arg: None
         }
@@ -977,7 +977,7 @@ mod tests {
 
     crate::runtime_test!(eval_handle, {
         let driver = Driver::install().unwrap();
-        let conn = Connection::run(&driver.executable()).unwrap();
+        let conn = Connection::run(&driver).unwrap();
         let pw = Playwright::wait_initial_object(&conn).await.unwrap();
         let pw: Arc<Playwright> = pw.upgrade().unwrap();
         let chromium: Arc<BrowserType> = pw.chromium().upgrade().unwrap();

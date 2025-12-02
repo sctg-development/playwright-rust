@@ -119,6 +119,7 @@ pub struct LocalStorageEntry {
 #[derive(Debug, Deserialize, Serialize, Eq, PartialEq, Clone, Copy, Hash)]
 #[serde(rename_all = "lowercase")]
 pub enum DocumentLoadState {
+    Commit,  // Added in Playwright 1.50+
     DomContentLoaded,
     Load,
     NetworkIdle

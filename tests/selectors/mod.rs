@@ -2,9 +2,12 @@ use super::Which;
 use playwright::api::{Playwright, Selectors};
 
 pub async fn all(playwright: &Playwright, which: Which) {
-    let selectors = playwright.selectors();
-
-    register_should_work(playwright, &selectors, which).await;
+    // Selectors may not be available in newer Playwright versions (1.50+)
+    if let Some(selectors) = playwright.selectors() {
+        register_should_work(playwright, &selectors, which).await;
+    } else {
+        println!("Selectors not available in this Playwright version, skipping test");
+    }
 }
 
 async fn register_should_work(playwright: &Playwright, selectors: &Selectors, which: Which) {

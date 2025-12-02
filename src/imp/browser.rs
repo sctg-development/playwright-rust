@@ -139,7 +139,7 @@ mod tests {
 
     crate::runtime_test!(new_context, {
         let driver = Driver::install().unwrap();
-        let conn = Connection::run(&driver.executable()).unwrap();
+        let conn = Connection::run(&driver).unwrap();
         let p = Playwright::wait_initial_object(&conn).await.unwrap();
         let p = p.upgrade().unwrap();
         let chromium = p.chromium().upgrade().unwrap();

@@ -4,7 +4,7 @@ use zip::{result::ZipError, ZipArchive};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Driver {
-    path: PathBuf
+    path: PathBuf,
 }
 
 impl Driver {
@@ -20,7 +20,9 @@ impl Driver {
     }
 
     /// Without prepare
-    pub fn new<P: Into<PathBuf>>(path: P) -> Self { Self { path: path.into() } }
+    pub fn new<P: Into<PathBuf>>(path: P) -> Self {
+        Self { path: path.into() }
+    }
     ///
     pub fn prepare(&self) -> Result<(), ZipError> {
         fs::create_dir_all(&self.path)?;
@@ -34,7 +36,7 @@ impl Driver {
             base.as_os_str(),
             "ms-playwright".as_ref(),
             "playwright-rust".as_ref(),
-            "driver".as_ref()
+            "driver".as_ref(),
         ]
         .iter()
         .collect();
@@ -47,17 +49,22 @@ impl Driver {
             "mac" => Platform::Mac,
             "win32" => Platform::Win32,
             "win32_x64" => Platform::Win32x64,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
     pub fn executable(&self) -> PathBuf {
+        // For Playwright 1.50+, we use node + package/cli.js
+        // The old playwright.sh/playwright.cmd are no longer included
         match self.platform() {
-            Platform::Linux => self.path.join("playwright.sh"),
-            Platform::Mac => self.path.join("playwright.sh"),
-            Platform::Win32 => self.path.join("playwright.cmd"),
-            Platform::Win32x64 => self.path.join("playwright.cmd")
+            Platform::Linux | Platform::Mac => self.path.join("node"),
+            Platform::Win32 | Platform::Win32x64 => self.path.join("node.exe"),
         }
+    }
+
+    /// Returns the path to the CLI script for Playwright 1.50+
+    pub fn cli_script(&self) -> PathBuf {
+        self.path.join("package").join("cli.js")
     }
 }
 
@@ -66,7 +73,7 @@ pub enum Platform {
     Linux,
     Win32,
     Win32x64,
-    Mac
+    Mac,
 }
 
 #[cfg(test)]
@@ -74,5 +81,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn install() { let _driver = Driver::install().unwrap(); }
+    fn install() {
+        let _driver = Driver::install().unwrap();
+    }
 }

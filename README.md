@@ -1,17 +1,17 @@
 # 🎭 [Playwright](https://playwright.dev) for Rust
 
 [![crates.io](https://img.shields.io/crates/v/playwright)](https://crates.io/crates/playwright)
-[![docs.rs](https://docs.rs/playwright/badge.svg)](https://docs.rs/playwright/)
+[![docs.rs](https://docs.rs/playwright/badge.svg)](https://sctg-development.github.io/playwright-rust/playwright/)
 ![MIT OR Apache-2.0](https://img.shields.io/crates/l/playwright)
-[![CI](https://github.com/octaltree/playwright-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/octaltree/playwright-rust/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/octaltree/playwright-rust/branch/master/graph/badge.svg)](https://codecov.io/gh/octaltree/playwright-rust)
+[![CI](https://github.com/sctg-development/playwright-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/sctg-development/playwright-rust/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/sctg-development/playwright-rust/branch/master/graph/badge.svg)](https://codecov.io/gh/sctg-development/playwright-rust)
 
 Playwright is a rust library to automate [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/) built on top of Node.js library.
 
 ## Installation
 ```
 [dependencies]
-playwright = "0.0.20"
+playwright = { url = "https://github.com/sctg-development/playwright-rust" branch = "master" }
 ```
 
 ## Usage

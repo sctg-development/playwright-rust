@@ -101,14 +101,18 @@ pub struct Launcher<'a, 'b, 'c> {
 impl<'a, 'b, 'c> Launcher<'a, 'b, 'c> {
     pub async fn launch(self) -> Result<Browser, Arc<Error>> {
         let Self { inner, args } = self;
-        let r = upgrade(&inner)?.launch(args).await?;
+        let inner_arc = upgrade(&inner)?;
+        let r = inner_arc.launch(args).await?;
         Ok(Browser::new(r))
     }
 
     fn new(inner: Weak<Impl>) -> Self {
+        let mut args = LaunchArgs::default();
+        // Playwright 1.50+ requires an explicit timeout value
+        args.timeout = Some(30000.0);
         Launcher {
             inner,
-            args: LaunchArgs::default()
+            args
         }
     }
 

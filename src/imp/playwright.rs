@@ -14,7 +14,7 @@ pub(crate) struct Playwright {
     chromium: Weak<BrowserType>,
     firefox: Weak<BrowserType>,
     webkit: Weak<BrowserType>,
-    selectors: Weak<Selectors>,
+    selectors: Option<Weak<Selectors>>,
     devices: Vec<DeviceDescriptor>
 }
 
@@ -24,7 +24,12 @@ impl Playwright {
         let chromium = get_object!(ctx, &i.chromium.guid, BrowserType)?;
         let firefox = get_object!(ctx, &i.firefox.guid, BrowserType)?;
         let webkit = get_object!(ctx, &i.webkit.guid, BrowserType)?;
-        let selectors = get_object!(ctx, &i.selectors.guid, Selectors)?;
+        // selectors is optional in newer Playwright versions (1.50+)
+        let selectors = if let Some(ref sel) = i.selectors {
+            Some(get_object!(ctx, &sel.guid, Selectors)?)
+        } else {
+            None
+        };
         let devices = i.device_descriptors;
         Ok(Self {
             channel,
@@ -48,7 +53,7 @@ impl Playwright {
 
     pub(crate) fn webkit(&self) -> Weak<BrowserType> { self.webkit.clone() }
 
-    pub(crate) fn selectors(&self) -> Weak<Selectors> { self.selectors.clone() }
+    pub(crate) fn selectors(&self) -> Option<Weak<Selectors>> { self.selectors.clone() }
 
     pub(crate) fn wait_initial_object(conn: &Connection) -> WaitInitialObject {
         WaitInitialObject::new(conn.context())
@@ -67,7 +72,13 @@ struct Initializer {
     firefox: OnlyGuid,
     webkit: OnlyGuid,
     android: OnlyGuid,
-    selectors: OnlyGuid,
+    #[serde(default)]
+    electron: Option<OnlyGuid>,
+    #[serde(default)]
+    selectors: Option<OnlyGuid>,
+    #[serde(default)]
+    utils: Option<OnlyGuid>,
+    #[serde(default)]
     device_descriptors: Vec<DeviceDescriptor>
 }
 

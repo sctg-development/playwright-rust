@@ -2,7 +2,7 @@ pub use crate::imp::playwright::DeviceDescriptor;
 use crate::{
     api::{browser_type::BrowserType, selectors::Selectors},
     imp::{core::*, playwright::Playwright as Impl, prelude::*},
-    Error
+    Error,
 };
 use std::{io, process::Command};
 
@@ -10,15 +10,20 @@ use std::{io, process::Command};
 pub struct Playwright {
     driver: Driver,
     _conn: Connection,
-    inner: Weak<Impl>
+    inner: Weak<Impl>,
 }
 
 fn run(driver: &Driver, args: &'static [&'static str]) -> io::Result<()> {
-    let status = Command::new(driver.executable()).args(args).status()?;
+    // For Playwright 1.50+, we run: node package/cli.js <args>
+    let cli_script = driver.cli_script();
+    let status = Command::new(driver.executable())
+        .arg(&cli_script)
+        .args(args)
+        .status()?;
     if !status.success() {
         return Err(io::Error::new(
             io::ErrorKind::Other,
-            format!("Exit with {}", status)
+            format!("Exit with {}", status),
         ));
     }
     Ok(())
@@ -33,29 +38,42 @@ impl Playwright {
 
     /// Constructs from installed playwright driver
     pub async fn with_driver(driver: Driver) -> Result<Playwright, Error> {
-        let conn = Connection::run(&driver.executable())?;
+        let conn = Connection::run(&driver)?;
         let p = Impl::wait_initial_object(&conn).await?;
         Ok(Self {
             driver,
             _conn: conn,
-            inner: p
+            inner: p,
         })
     }
 
     /// Runs $ playwright install
-    pub fn prepare(&self) -> io::Result<()> { run(&self.driver, &["install"]) }
+    pub fn prepare(&self) -> io::Result<()> {
+        run(&self.driver, &["install"])
+    }
 
     /// Runs $ playwright install chromium
-    pub fn install_chromium(&self) -> io::Result<()> { run(&self.driver, &["install", "chromium"]) }
+    pub fn install_chromium(&self) -> io::Result<()> {
+        run(&self.driver, &["install", "chromium"])
+    }
 
-    pub fn install_firefox(&self) -> io::Result<()> { run(&self.driver, &["install", "firefox"]) }
+    pub fn install_firefox(&self) -> io::Result<()> {
+        run(&self.driver, &["install", "firefox"])
+    }
 
-    pub fn install_webkit(&self) -> io::Result<()> { run(&self.driver, &["install", "webkit"]) }
+    pub fn install_webkit(&self) -> io::Result<()> {
+        run(&self.driver, &["install", "webkit"])
+    }
 
     /// Launcher
     pub fn chromium(&self) -> BrowserType {
-        let inner = weak_and_then(&self.inner, |rc| rc.chromium());
-        BrowserType::new(inner)
+        match self.inner.upgrade() {
+            Some(playwright_impl) => {
+                let chromium_weak = playwright_impl.chromium();
+                BrowserType::new(chromium_weak)
+            }
+            None => BrowserType::new(Weak::new()),
+        }
     }
 
     /// Launcher
@@ -70,11 +88,16 @@ impl Playwright {
         BrowserType::new(inner)
     }
 
-    pub fn driver(&mut self) -> &mut Driver { &mut self.driver }
+    pub fn driver(&mut self) -> &mut Driver {
+        &mut self.driver
+    }
 
-    pub fn selectors(&self) -> Selectors {
-        let inner = weak_and_then(&self.inner, |rc| rc.selectors());
-        Selectors::new(inner)
+    /// Returns Selectors object, if available.
+    /// Note: Selectors are not available in Playwright 1.50+ as a separate object.
+    pub fn selectors(&self) -> Option<Selectors> {
+        let inner = self.inner.upgrade()?;
+        let selectors_weak = inner.selectors()?;
+        Some(Selectors::new(selectors_weak))
     }
 
     /// Returns a dictionary of devices to be used with [`method: Browser.newContext`] or [`method: Browser.newPage`].
