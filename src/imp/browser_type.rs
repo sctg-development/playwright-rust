@@ -3,14 +3,14 @@ use crate::imp::{
     browser_context::BrowserContext,
     core::*,
     prelude::*,
-    utils::{BrowserChannel, ColorScheme, Geolocation, HttpCredentials, ProxySettings, Viewport}
+    utils::{BrowserChannel, ColorScheme, Geolocation, HttpCredentials, ProxySettings, Viewport},
 };
 
 #[derive(Debug)]
 pub(crate) struct BrowserType {
     channel: ChannelOwner,
     name: String,
-    executable: PathBuf
+    executable: PathBuf,
 }
 
 impl BrowserType {
@@ -19,17 +19,21 @@ impl BrowserType {
         Ok(Self {
             channel,
             name,
-            executable
+            executable,
         })
     }
 
-    pub(crate) fn name(&self) -> &str { &self.name }
+    pub(crate) fn name(&self) -> &str {
+        &self.name
+    }
 
-    pub(crate) fn executable(&self) -> &Path { &self.executable }
+    pub(crate) fn executable(&self) -> &Path {
+        &self.executable
+    }
 
     pub(crate) async fn launch(
         &self,
-        args: LaunchArgs<'_, '_, '_>
+        args: LaunchArgs<'_, '_, '_>,
     ) -> Result<Weak<Browser>, Arc<Error>> {
         let res = send_message!(self, "launch", args);
         let guid = only_guid(&res)?;
@@ -39,7 +43,7 @@ impl BrowserType {
 
     pub(crate) async fn launch_persistent_context(
         &self,
-        args: LaunchPersistentContextArgs<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
+        args: LaunchPersistentContextArgs<'_, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>,
     ) -> Result<Weak<BrowserContext>, Arc<Error>> {
         let res = send_message!(self, "launchPersistentContext", args);
         let guid = only_guid(&res)?;
@@ -49,18 +53,18 @@ impl BrowserType {
 
     pub(crate) async fn connect_over_cdp(
         &self,
-        args: ConnectOverCdpArgs<'_>
+        args: ConnectOverCdpArgs<'_>,
     ) -> ArcResult<Weak<Browser>> {
         let res = send_message!(self, "connectOverCDP", args);
         #[derive(Deserialize)]
         #[serde(rename_all = "camelCase")]
         struct Response {
             browser: OnlyGuid,
-            default_context: Option<OnlyGuid>
+            default_context: Option<OnlyGuid>,
         }
         let Response {
             browser,
-            default_context
+            default_context,
         } = serde_json::from_value((*res).clone()).map_err(Error::Serde)?;
         let browser = get_object!(self.context()?.lock().unwrap(), &browser.guid, Browser)?;
         let arc_browser = upgrade(&browser)?;
@@ -106,7 +110,7 @@ pub(crate) struct LaunchArgs<'a, 'b, 'c> {
     pub(crate) headless: Option<bool>,
     pub(crate) chromium_sandbox: Option<bool>,
     pub(crate) firefox_user_prefs: Option<Map<String, Value>>,
-    pub(crate) channel: Option<BrowserChannel>
+    pub(crate) channel: Option<BrowserChannel>,
 }
 
 impl<'a, 'b, 'c> Default for LaunchArgs<'a, 'b, 'c> {
@@ -127,14 +131,18 @@ impl<'a, 'b, 'c> Default for LaunchArgs<'a, 'b, 'c> {
             headless: None,
             chromium_sandbox: None,
             firefox_user_prefs: None,
-            channel: None
+            channel: None,
         }
     }
 }
 
 impl RemoteObject for BrowserType {
-    fn channel(&self) -> &ChannelOwner { &self.channel }
-    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+    fn channel(&self) -> &ChannelOwner {
+        &self.channel
+    }
+    fn channel_mut(&mut self) -> &mut ChannelOwner {
+        &mut self.channel
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -142,7 +150,7 @@ impl RemoteObject for BrowserType {
 struct Initializer {
     name: String,
     #[serde(rename = "executablePath")]
-    executable: PathBuf
+    executable: PathBuf,
 }
 
 // launch args | context args | {user_data_dir: }
@@ -200,7 +208,7 @@ pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i
     pub(crate) record_video: Option<RecordVideo<'j>>,
     pub(crate) record_har: Option<RecordHar<'k>>,
 
-    pub(crate) channel: Option<BrowserChannel>
+    pub(crate) channel: Option<BrowserChannel>,
 }
 
 #[skip_serializing_none]
@@ -208,7 +216,7 @@ pub(crate) struct LaunchPersistentContextArgs<'a, 'b, 'c, 'd, 'e, 'f, 'g, 'h, 'i
 #[serde(rename_all = "camelCase")]
 pub struct RecordVideo<'a> {
     pub dir: &'a Path,
-    pub size: Option<Viewport>
+    pub size: Option<Viewport>,
 }
 
 #[skip_serializing_none]
@@ -216,7 +224,7 @@ pub struct RecordVideo<'a> {
 #[serde(rename_all = "camelCase")]
 pub struct RecordHar<'a> {
     pub path: &'a Path,
-    pub omit_content: Option<bool>
+    pub omit_content: Option<bool>,
 }
 
 impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_> {
@@ -260,7 +268,7 @@ impl<'a> LaunchPersistentContextArgs<'a, '_, '_, '_, '_, '_, '_, '_, '_, '_, '_>
             chromium_sandbox: None,
             record_video: None,
             record_har: None,
-            channel: None
+            channel: None,
         }
     }
 }
@@ -272,7 +280,7 @@ pub(crate) struct ConnectArgs<'a> {
     ws_endpoint: &'a str,
     pub(crate) timeout: Option<f64>,
     #[serde(rename = "slowMo")]
-    pub(crate) slowmo: Option<f64>
+    pub(crate) slowmo: Option<f64>,
 }
 
 impl<'a> ConnectArgs<'a> {
@@ -280,7 +288,7 @@ impl<'a> ConnectArgs<'a> {
         Self {
             ws_endpoint,
             timeout: Some(30000.0),
-            slowmo: None
+            slowmo: None,
         }
     }
 }
@@ -295,7 +303,7 @@ pub(crate) struct ConnectOverCdpArgs<'a> {
     pub(crate) headers: Option<HashMap<String, String>>,
     pub(crate) timeout: Option<f64>,
     #[serde(rename = "slowMo")]
-    pub(crate) slowmo: Option<f64>
+    pub(crate) slowmo: Option<f64>,
 }
 
 impl<'a> ConnectOverCdpArgs<'a> {
@@ -305,7 +313,7 @@ impl<'a> ConnectOverCdpArgs<'a> {
             endpoint_url,
             headers: None,
             timeout: Some(30000.0),
-            slowmo: None
+            slowmo: None,
         }
     }
 }

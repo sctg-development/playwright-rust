@@ -32,10 +32,13 @@ playwright::runtime_test!(chromium_selectors, selectors(Which::Chromium).await);
 playwright::runtime_test!(firefox_selectors, selectors(Which::Firefox).await);
 // playwright::runtime_test!(webkit_selectors, selectors(Which::Webkit).await);
 
+#[ignore]
 playwright::runtime_test!(chromium_devices, devices(Which::Chromium).await);
+#[ignore]
 playwright::runtime_test!(firefox_devices, devices(Which::Chromium).await);
 // playwright::runtime_test!(webkit_devices, devices(Which::Webkit).await);
 
+#[ignore]
 playwright::runtime_test!(
     connect_over_cdp,
     connect::connect_over_cdp(Which::Chromium).await

@@ -3,20 +3,20 @@ use crate::imp::{
     browser_type::{RecordHar, RecordVideo},
     core::*,
     prelude::*,
-    utils::{ColorScheme, Geolocation, HttpCredentials, ProxySettings, StorageState, Viewport}
+    utils::{ColorScheme, Geolocation, HttpCredentials, ProxySettings, StorageState, Viewport},
 };
 
 #[derive(Debug)]
 pub(crate) struct Browser {
     channel: ChannelOwner,
     version: String,
-    var: Mutex<Variable>
+    var: Mutex<Variable>,
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct Variable {
     contexts: Vec<Weak<BrowserContext>>,
-    is_remote: bool
+    is_remote: bool,
 }
 
 impl Browser {
@@ -27,11 +27,13 @@ impl Browser {
             version,
             var: Mutex::new(Variable {
                 contexts: Vec::new(),
-                is_remote: false
-            })
+                is_remote: false,
+            }),
         })
     }
-    pub(crate) fn version(&self) -> &str { &self.version }
+    pub(crate) fn version(&self) -> &str {
+        &self.version
+    }
 
     pub(crate) async fn close(&self) -> Result<(), Arc<Error>> {
         let _ = send_message!(self, "close", Map::new());
@@ -58,13 +60,17 @@ impl Browser {
         contexts.remove_one(|v| v.ptr_eq(c));
     }
 
-    pub(crate) fn is_remote(&self) -> bool { self.var.lock().unwrap().is_remote }
+    pub(crate) fn is_remote(&self) -> bool {
+        self.var.lock().unwrap().is_remote
+    }
 
-    pub(crate) fn set_is_remote_true(&self) { self.var.lock().unwrap().is_remote = true; }
+    pub(crate) fn set_is_remote_true(&self) {
+        self.var.lock().unwrap().is_remote = true;
+    }
 
     pub(crate) async fn new_context(
         &self,
-        args: NewContextArgs<'_, '_, '_, '_, '_, '_, '_>
+        args: NewContextArgs<'_, '_, '_, '_, '_, '_, '_>,
     ) -> Result<Weak<BrowserContext>, Arc<Error>> {
         let res = send_message!(self, "newContext", args);
         let guid = only_guid(&res)?;
@@ -84,14 +90,18 @@ impl Browser {
 }
 
 impl RemoteObject for Browser {
-    fn channel(&self) -> &ChannelOwner { &self.channel }
-    fn channel_mut(&mut self) -> &mut ChannelOwner { &mut self.channel }
+    fn channel(&self) -> &ChannelOwner {
+        &self.channel
+    }
+    fn channel_mut(&mut self) -> &mut ChannelOwner {
+        &mut self.channel
+    }
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Initializer {
-    version: String
+    version: String,
 }
 
 #[skip_serializing_none]
@@ -130,7 +140,7 @@ pub(crate) struct NewContextArgs<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     pub(crate) record_video: Option<RecordVideo<'j>>,
     pub(crate) record_har: Option<RecordHar<'k>>,
 
-    pub(crate) storage_state: Option<StorageState>
+    pub(crate) storage_state: Option<StorageState>,
 }
 
 impl<'e, 'f, 'g, 'h, 'i, 'j, 'k> Default for NewContextArgs<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
@@ -161,7 +171,7 @@ impl<'e, 'f, 'g, 'h, 'i, 'j, 'k> Default for NewContextArgs<'e, 'f, 'g, 'h, 'i, 
             chromium_sandbox: None,
             record_video: None,
             record_har: None,
-            storage_state: None
+            storage_state: None,
         }
     }
 }
