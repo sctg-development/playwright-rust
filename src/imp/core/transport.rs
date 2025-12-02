@@ -84,8 +84,9 @@ impl Writer {
     }
 
     pub(super) fn send(&mut self, req: &Req<'_, '_>) -> Result<(), TransportError> {
-        log::debug!("SEND {:?}", &req);
         let serialized = serde_json::to_vec(&req)?;
+        let serialized_str = String::from_utf8_lossy(&serialized);
+        log::debug!("SEND {}", serialized_str);
         let length = serialized.len() as u32;
         let mut bytes = length.to_le_bytes().to_vec();
         bytes.extend(serialized);

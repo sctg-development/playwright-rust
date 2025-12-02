@@ -81,7 +81,8 @@ impl BrowserType {
 }
 
 #[skip_serializing_none]
-#[derive(Serialize, Default)]
+#[skip_serializing_none]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct LaunchArgs<'a, 'b, 'c> {
     #[serde(rename = "executablePath")]
@@ -106,6 +107,29 @@ pub(crate) struct LaunchArgs<'a, 'b, 'c> {
     pub(crate) chromium_sandbox: Option<bool>,
     pub(crate) firefox_user_prefs: Option<Map<String, Value>>,
     pub(crate) channel: Option<BrowserChannel>
+}
+
+impl<'a, 'b, 'c> Default for LaunchArgs<'a, 'b, 'c> {
+    fn default() -> Self {
+        Self {
+            executable: None,
+            args: None,
+            ignore_all_default_args: None,
+            handle_sigint: None,
+            handle_sigterm: None,
+            handle_sighup: None,
+            timeout: Some(30000.0),
+            devtools: None,
+            proxy: None,
+            downloads: None,
+            slowmo: None,
+            env: None,
+            headless: None,
+            chromium_sandbox: None,
+            firefox_user_prefs: None,
+            channel: None
+        }
+    }
 }
 
 impl RemoteObject for BrowserType {

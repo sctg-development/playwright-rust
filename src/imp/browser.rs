@@ -95,11 +95,12 @@ struct Initializer {
 }
 
 #[skip_serializing_none]
-#[derive(Debug, Serialize, Default)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct NewContextArgs<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     sdk_language: &'static str,
 
+    pub(crate) timeout: Option<f64>,
     pub(crate) proxy: Option<ProxySettings>,
 
     pub(crate) viewport: Option<Option<Viewport>>,
@@ -130,6 +131,39 @@ pub(crate) struct NewContextArgs<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
     pub(crate) record_har: Option<RecordHar<'k>>,
 
     pub(crate) storage_state: Option<StorageState>
+}
+
+impl<'e, 'f, 'g, 'h, 'i, 'j, 'k> Default for NewContextArgs<'e, 'f, 'g, 'h, 'i, 'j, 'k> {
+    fn default() -> Self {
+        Self {
+            sdk_language: "rust",
+            timeout: Some(30000.0),
+            proxy: None,
+            viewport: None,
+            screen: None,
+            no_viewport: None,
+            ignore_https_errors: None,
+            js_enabled: None,
+            bypass_csp: None,
+            user_agent: None,
+            locale: None,
+            timezone_id: None,
+            geolocation: None,
+            permissions: None,
+            extra_http_headers: None,
+            offline: None,
+            http_credentials: None,
+            device_scale_factor: None,
+            is_mobile: None,
+            has_touch: None,
+            color_scheme: None,
+            accept_downloads: None,
+            chromium_sandbox: None,
+            record_video: None,
+            record_har: None,
+            storage_state: None
+        }
+    }
 }
 
 #[cfg(test)]
