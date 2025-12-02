@@ -12,26 +12,32 @@ async fn main() -> Result<(), playwright::Error> {
     let context = browser.context_builder().build().await?;
     let page = context.new_page().await?;
 
-    page.goto_builder("https://docs.rs/playwright/0.0.5/playwright/")
+    page.goto_builder("https://sctg-development.github.io/playwright-rust/playwright/")
         .goto()
         .await?;
     // Exec js on browser and Deserialize with serde
     let url: String = page.eval("() => location.href").await?;
-    assert_eq!(url, "https://docs.rs/playwright/0.0.5/playwright/");
-
-    // Wait until navigated
-    page.click_builder(r#"a[title="playwright::api mod"]"#)
-        .click()
-        .await?;
     assert_eq!(
-        page.url().unwrap(),
-        "https://docs.rs/playwright/0.0.5/playwright/api/index.html"
+        url,
+        "https://sctg-development.github.io/playwright-rust/playwright/"
     );
 
-    // Waiting load explicitly is unnecessary.
-    // [many functions wait contents automaticaly](https://playwright.dev/docs/actionability/).
-    page.expect_event(playwright::api::page::EventType::Load)
+    // Wait until navigated
+    page.click_builder(r#"a[title="mod playwright::api"]"#)
+        .click()
         .await?;
+
+    // Check if span with class=version contains package version
+    let version: String = page
+        .eval(&format!(
+            r#"() => document.querySelector("span.version").innerText.trim()"#
+        ))
+        .await?;
+    assert_eq!(version, format!("{}", env!("CARGO_PKG_VERSION")));
+    assert_eq!(
+        page.url().unwrap(),
+        "https://sctg-development.github.io/playwright-rust/playwright/api/index.html"
+    );
 
     Ok(())
 }
