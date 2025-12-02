@@ -1,4 +1,7 @@
 # 🎭 [Playwright](https://playwright.dev) for Rust
+![](https://tokeisrv.sctg.eu.org/b1/github.com/sctg-development/playwright-rust?type=Rust&category=code)
+![](https://tokeisrv.sctg.eu.org/b1/github.com/sctg-development/playwright-rust?type=Rust&category=comments&color=abdbe3)
+![](https://tokeisrv.sctg.eu.org/b1/github.com/sctg-development/playwright-rust?type=Markdown&label=doc&color=e28743)
 
 [![crates.io](https://img.shields.io/crates/v/playwright)](https://crates.io/crates/playwright)
 [![docs.rs](https://docs.rs/playwright/badge.svg)](https://sctg-development.github.io/playwright-rust/playwright/)
