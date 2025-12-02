@@ -1,0 +1,73 @@
+<script type="module">
+  // Copyright (c) 2025 Ronan LE MEILLAT, SCTG Development
+  // This file is part of the rust-photoacoustic project and is licensed under the
+  // SCTG Development Non-Commercial License v1.0 (see LICENSE.md for details).
+
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+  function isCurrentModeDark() {
+    // Check if the current mode is dark
+
+    let isDark = (
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    );
+    return isDark;
+  }
+  // Mermaid configuration
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: isCurrentModeDark() ? "dark" : "default",
+    darkMode: isCurrentModeDark(),
+    themeVariables: {
+      fontFamily: "inherit",
+    },
+  });
+
+  // Function to convert Mermaid code blocks
+  function renderMermaid() {
+    const mermaidBlocks = document.querySelectorAll(
+      "pre.language-mermaid code"
+    );
+
+    mermaidBlocks.forEach((block, index) => {
+      const code = block.textContent;
+      const id = `mermaid-${index}`;
+
+      // Create a div for Mermaid
+      const mermaidDiv = document.createElement("div");
+      mermaidDiv.style.width = "100%";
+      mermaidDiv.className = "mermaid";
+      mermaidDiv.textContent = code;
+      mermaidDiv.id = id;
+
+      // Replace the pre/code block with the mermaid div
+      block.parentElement.parentElement.replaceChild(
+        mermaidDiv,
+        block.parentElement
+      );
+    });
+
+    // Re-initialize Mermaid for new elements
+    mermaid.run();
+  }
+
+  // Wait for DOM to be loaded
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", renderMermaid);
+  } else {
+    renderMermaid();
+  }
+</script>
+
+<style>
+  .mermaid {
+    text-align: center;
+    margin: 1em 0;
+  }
+
+  .mermaid svg {
+    max-width: 100%;
+    height: auto;
+  }
+</style>

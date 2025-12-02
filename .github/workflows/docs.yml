@@ -41,11 +41,24 @@ jobs:
           workspaces: "rust -> target"
           key: docs
 
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
       - name: Build documentation
+        env:
+          # use env: for better quoting/escaping and to ensure GH Actions set it correctly
+          RUSTDOCFLAGS: "--html-in-header ./docs/mermaid-header.html --html-in-header ./docs/github-corner.html"
         run: |
+          # Debugging: show which rust/cargo versions and ensure files are present
+          rustc --version
+          cargo --version
+          echo "Listing docs files for debug:" && ls -la ./docs
+
           # Build documentation with all features
-          export RUSTDOCFLAGS="--html-in-header ../docs/mermaid-header.html --html-in-header ../docs/github-corner.html"
-          cargo doc --all-features --document-private-items --no-deps --package playwright
+          cargo doc --features only-for-docs-rs --document-private-items --no-deps --package playwright
 
           # Create an index.html that redirects to the main crate documentation
           echo '<meta http-equiv="refresh" content="0; url=playwright">' > target/doc/index.html
