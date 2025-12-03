@@ -2,7 +2,7 @@ name: Rust Documentation
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - "src/**/*.rs"
       - "Cargo.toml"
