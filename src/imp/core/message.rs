@@ -17,46 +17,46 @@ pub(crate) struct Req<'a, 'b> {
     pub(crate) params: Map<String, Value>,
     /// Metadata is required by Playwright 1.50+
     #[serde(default)]
-    pub(crate) metadata: Map<String, Value>
+    pub(crate) metadata: Map<String, Value>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(untagged)]
 pub(crate) enum Res {
     Result(ResResult),
-    Initial(ResInitial)
+    Initial(ResInitial),
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct ResResult {
     pub(crate) id: i32,
-    pub(crate) body: Result<Value, ErrorMessage>
+    pub(crate) body: Result<Value, ErrorMessage>,
 }
 
 impl<'de> Deserialize<'de> for ResResult {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         #[derive(Deserialize)]
         struct ResponseResultImpl {
             id: i32,
             result: Option<Value>,
-            error: Option<ErrorWrap>
+            error: Option<ErrorWrap>,
         }
         let ResponseResultImpl { id, result, error } =
             ResponseResultImpl::deserialize(deserializer)?;
         if let Some(ErrorWrap { error }) = error {
             Ok(Self {
                 id,
-                body: Err(error)
+                body: Err(error),
             })
         } else if let Some(x) = result {
             Ok(Self { id, body: Ok(x) })
         } else {
             Ok(Self {
                 id,
-                body: Ok(Value::default())
+                body: Ok(Value::default()),
             })
         }
     }
@@ -66,7 +66,8 @@ impl<'de> Deserialize<'de> for ResResult {
 pub(crate) struct ResInitial {
     pub(crate) guid: Str<Guid>,
     pub(crate) method: Str<Method>,
-    pub(crate) params: Map<String, Value>
+    #[serde(default)]
+    pub(crate) params: Map<String, Value>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -75,12 +76,12 @@ pub(crate) struct CreateParams {
     pub(crate) typ: Str<ObjectType>,
     pub(crate) guid: Str<Guid>,
     #[serde(default)]
-    pub(crate) initializer: Value
+    pub(crate) initializer: Value,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub(crate) struct ErrorWrap {
-    error: ErrorMessage
+    error: ErrorMessage,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, thiserror::Error)]
@@ -88,12 +89,12 @@ pub(crate) struct ErrorWrap {
 pub struct ErrorMessage {
     pub(crate) name: String,
     pub(crate) message: String,
-    pub(crate) stack: String
+    pub(crate) stack: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct OnlyGuid {
-    pub(crate) guid: Str<Guid>
+    pub(crate) guid: Str<Guid>,
 }
 
 pub(crate) enum Guid {}
@@ -121,8 +122,12 @@ impl Validator for Method {
 }
 
 impl Method {
-    pub(crate) fn is_create(s: &S<Self>) -> bool { s.as_str() == "__create__" }
-    pub(crate) fn is_dispose(s: &S<Self>) -> bool { s.as_str() == "__dispose__" }
+    pub(crate) fn is_create(s: &S<Self>) -> bool {
+        s.as_str() == "__create__"
+    }
+    pub(crate) fn is_dispose(s: &S<Self>) -> bool {
+        s.as_str() == "__dispose__"
+    }
 }
 
 pub(crate) enum ObjectType {}
@@ -170,7 +175,7 @@ pub(crate) fn only_str(v: &Value) -> Result<&str, Error> {
 pub(crate) fn maybe_only_str(v: &Value) -> Result<Option<&str>, Error> {
     let s = match first(v) {
         Some(s) => s.as_str().ok_or(Error::InvalidParams)?,
-        None => return Ok(None)
+        None => return Ok(None),
     };
     Ok(Some(s))
 }
@@ -178,12 +183,12 @@ pub(crate) fn maybe_only_str(v: &Value) -> Result<Option<&str>, Error> {
 #[derive(Debug, Serialize)]
 pub(crate) struct Argument {
     pub(crate) value: Map<String, Value>,
-    pub(crate) handles: Vec<OnlyGuid>
+    pub(crate) handles: Vec<OnlyGuid>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct DateTime {
-    d: String
+    d: String,
 }
 
 mod datetime {
@@ -195,7 +200,9 @@ mod datetime {
 
     #[cfg(feature = "chrono")]
     impl From<chrono::DateTime<Utc>> for DateTime {
-        fn from(c: chrono::DateTime<Utc>) -> DateTime { Self { d: c.to_rfc3339() } }
+        fn from(c: chrono::DateTime<Utc>) -> DateTime {
+            Self { d: c.to_rfc3339() }
+        }
     }
 
     #[cfg(feature = "chrono")]
@@ -211,7 +218,7 @@ mod datetime {
     impl ser::Serialize for DateTime {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
-            S: ser::Serializer
+            S: ser::Serializer,
         {
             let mut s = serializer.serialize_struct("e7ee19d3-64cb-4286-8762-6dd8ab78eb89", 1)?;
             s.serialize_field("d", &self.d)?;

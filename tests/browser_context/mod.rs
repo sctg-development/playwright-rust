@@ -66,7 +66,12 @@ async fn launch(b: &Browser) -> BrowserContext {
 }
 
 async fn launch_persistent_context(t: &BrowserType) -> BrowserContext {
-    t.persistent_context_launcher("./target".as_ref())
+    use std::path::Path;
+    // Use absolute path for userDataDir (Playwright driver requires absolute paths)
+    let temp_path = std::env::temp_dir().join("test-playwright-rust-ctx");
+    std::fs::create_dir_all(&temp_path).ok();
+    
+    t.persistent_context_launcher(temp_path.as_path())
         .user_agent("asdf")
         .permissions(&["geolocation".into()])
         .launch()
