@@ -28,7 +28,10 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt, clippy
-
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ci-${{ matrix.os }}
       - name: Lint
         run: cargo clippy --all-targets
       - name: Prepare driver and browsers
