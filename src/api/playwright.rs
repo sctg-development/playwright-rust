@@ -30,13 +30,72 @@ fn run(driver: &Driver, args: &'static [&'static str]) -> io::Result<()> {
 }
 
 impl Playwright {
-    /// Installs playwright driver to "$CACHE_DIR/.ms-playwright/playwright-rust/driver"
+    /// Installs the Playwright driver and initializes a new Playwright instance.
+    ///
+    /// This is the main entry point for using Playwright. It downloads and installs
+    /// the Playwright driver to the system's cache directory
+    /// (`$CACHE_DIR/.ms-playwright/playwright-rust/driver`) and establishes a connection
+    /// to the driver process.
+    ///
+    /// # Returns
+    ///
+    /// Returns a new `Playwright` instance if the driver installation and connection succeed,
+    /// or an `Error` if installation or connection fails.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if:
+    /// - The driver installation fails (network issues, disk space, etc.)
+    /// - The connection to the driver process cannot be established
+    ///
+    /// # Examples
+    ///
+    /// Initialize Playwright and use it to launch a browser:
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// use playwright::Playwright;
+    ///
+    /// let playwright = Playwright::initialize().await?;
+    /// let chromium = playwright.chromium();
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn initialize() -> Result<Playwright, Error> {
         let driver = Driver::install()?;
         Self::with_driver(driver).await
     }
 
-    /// Constructs from installed playwright driver
+    /// Constructs a new `Playwright` instance from an already-installed driver.
+    ///
+    /// Use this method when you have a custom `Driver` instance or want to use
+    /// an existing driver installation. This establishes a connection to the driver
+    /// process and initializes the Playwright object.
+    ///
+    /// # Arguments
+    ///
+    /// * `driver` - An installed Playwright driver instance
+    ///
+    /// # Returns
+    ///
+    /// Returns a new `Playwright` instance connected to the given driver, or an `Error`
+    /// if the connection cannot be established.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the connection to the driver process fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), playwright::Error> {
+    /// use playwright::{Playwright, Driver};
+    ///
+    /// let driver = Driver::install()?;
+    /// let playwright = Playwright::with_driver(driver).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn with_driver(driver: Driver) -> Result<Playwright, Error> {
         let conn = Connection::run(&driver)?;
         let p = Impl::wait_initial_object(&conn).await?;
@@ -47,25 +106,119 @@ impl Playwright {
         })
     }
 
-    /// Runs $ playwright install
+    /// Installs all Playwright browsers (Chromium, Firefox, and WebKit).
+    ///
+    /// This runs the equivalent of `playwright install` and downloads all supported
+    /// browser engines. It may take several minutes depending on your internet connection.
+    /// If you only need specific browsers, consider using [`install_chromium`](Self::install_chromium),
+    /// [`install_firefox`](Self::install_firefox), or [`install_webkit`](Self::install_webkit) instead.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if installation succeeds, or an `io::Error` if it fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use playwright::Playwright;
+    /// # let playwright = Playwright::initialize().await?;
+    /// playwright.prepare()?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn prepare(&self) -> io::Result<()> {
         run(&self.driver, &["install"])
     }
 
-    /// Runs $ playwright install chromium
+    /// Installs the Chromium browser engine.
+    ///
+    /// This runs the equivalent of `playwright install chromium` and downloads
+    /// the Chromium browser engine. If you only need Chromium, use this instead
+    /// of [`prepare`](Self::prepare) to save disk space and download time.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if installation succeeds, or an `io::Error` if it fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use playwright::Playwright;
+    /// # let playwright = Playwright::initialize().await?;
+    /// playwright.install_chromium()?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn install_chromium(&self) -> io::Result<()> {
         run(&self.driver, &["install", "chromium"])
     }
 
+    /// Installs the Firefox browser engine.
+    ///
+    /// This runs the equivalent of `playwright install firefox` and downloads
+    /// the Firefox browser engine. If you only need Firefox, use this instead
+    /// of [`prepare`](Self::prepare) to save disk space and download time.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if installation succeeds, or an `io::Error` if it fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use playwright::Playwright;
+    /// # let playwright = Playwright::initialize().await?;
+    /// playwright.install_firefox()?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn install_firefox(&self) -> io::Result<()> {
         run(&self.driver, &["install", "firefox"])
     }
 
+    /// Installs the WebKit browser engine.
+    ///
+    /// This runs the equivalent of `playwright install webkit` and downloads
+    /// the WebKit browser engine. If you only need WebKit, use this instead
+    /// of [`prepare`](Self::prepare) to save disk space and download time.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if installation succeeds, or an `io::Error` if it fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use playwright::Playwright;
+    /// # let playwright = Playwright::initialize().await?;
+    /// playwright.install_webkit()?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn install_webkit(&self) -> io::Result<()> {
         run(&self.driver, &["install", "webkit"])
     }
 
-    /// Launcher
+    /// Returns a launcher for the Chromium browser engine.
+    ///
+    /// # Returns
+    ///
+    /// A `BrowserType` instance that can be used to launch Chromium browsers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use playwright::Playwright;
+    /// # let playwright = Playwright::initialize().await?;
+    /// let chromium = playwright.chromium();
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn chromium(&self) -> BrowserType {
         match self.inner.upgrade() {
             Some(playwright_impl) => {
@@ -76,46 +229,119 @@ impl Playwright {
         }
     }
 
-    /// Launcher
+    /// Returns a launcher for the Firefox browser engine.
+    ///
+    /// # Returns
+    ///
+    /// A `BrowserType` instance that can be used to launch Firefox browsers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use playwright::Playwright;
+    /// # let playwright = Playwright::initialize().await?;
+    /// let firefox = playwright.firefox();
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn firefox(&self) -> BrowserType {
         let inner = weak_and_then(&self.inner, |rc| rc.firefox());
         BrowserType::new(inner)
     }
 
-    /// Launcher
+    /// Returns a launcher for the WebKit browser engine.
+    ///
+    /// # Returns
+    ///
+    /// A `BrowserType` instance that can be used to launch WebKit browsers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use playwright::Playwright;
+    /// # let playwright = Playwright::initialize().await?;
+    /// let webkit = playwright.webkit();
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn webkit(&self) -> BrowserType {
         let inner = weak_and_then(&self.inner, |rc| rc.webkit());
         BrowserType::new(inner)
     }
 
+    /// Returns a mutable reference to the underlying `Driver`.
+    ///
+    /// This allows you to access driver-specific operations or configuration.
+    ///
+    /// # Returns
+    ///
+    /// A mutable reference to the `Driver` instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use playwright::Playwright;
+    /// # let mut playwright = Playwright::initialize().await?;
+    /// let driver = playwright.driver();
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn driver(&mut self) -> &mut Driver {
         &mut self.driver
     }
 
-    /// Returns Selectors object, if available.
+    /// Returns a Selectors object for registering custom selector engines, if available.
+    ///
     /// Note: Selectors are not available in Playwright 1.50+ as a separate object.
+    /// This method returns `None` if selectors are not available in the current
+    /// driver version.
+    ///
+    /// # Returns
+    ///
+    /// Some(`Selectors`) if available, or `None` if not supported by the driver.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use playwright::Playwright;
+    /// # let playwright = Playwright::initialize().await?;
+    /// if let Some(_selectors) = playwright.selectors() {
+    ///     // Register custom selector engines
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn selectors(&self) -> Option<Selectors> {
         let inner = self.inner.upgrade()?;
         let selectors_weak = inner.selectors()?;
         Some(Selectors::new(selectors_weak))
     }
 
-    /// Returns a dictionary of devices to be used with [`method: Browser.newContext`] or [`method: Browser.newPage`].
+    /// Returns a dictionary of all available device descriptors.
     ///
-    /// ```js
-    /// const { webkit, devices } = require('playwright');
-    /// const iPhone = devices['iPhone 6'];
+    /// Device descriptors contain pre-configured settings for various devices
+    /// (phones, tablets, etc.) that can be used with [`Browser::newContext`]
+    /// or [`Browser::newPage`] to simulate real device behavior.
     ///
-    /// (async () => {
-    ///  const browser = await webkit.launch();
-    ///  const context = await browser.newContext({
-    ///    ...iPhone
-    ///  });
-    ///  const page = await context.newPage();
-    ///  await page.goto('http://example.com');
-    ///  // other actions...
-    ///  await browser.close();
-    /// })();
+    /// # Returns
+    ///
+    /// A vector of `DeviceDescriptor` objects, or an empty vector if no devices
+    /// are available.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use playwright::Playwright;
+    /// # let playwright = Playwright::initialize().await?;
+    /// let devices = playwright.devices();
+    /// println!("Available devices: {}", devices.len());
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn devices(&self) -> Vec<DeviceDescriptor> {
         upgrade(&self.inner)
@@ -123,6 +349,33 @@ impl Playwright {
             .unwrap_or_default()
     }
 
+    /// Returns a device descriptor by name, if available.
+    ///
+    /// Device descriptors contain pre-configured settings for various devices
+    /// (phones, tablets, etc.) that can be used with [`Browser::newContext`]
+    /// or [`Browser::newPage`] to simulate real device behavior.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the device (e.g., "iPhone 12", "Pixel 5")
+    ///
+    /// # Returns
+    ///
+    /// Some(`DeviceDescriptor`) if a device with the given name exists,
+    /// or `None` if no such device is found.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+    /// # use playwright::Playwright;
+    /// # let playwright = Playwright::initialize().await?;
+    /// if let Some(_device) = playwright.device("iPhone 12") {
+    ///     println!("Found iPhone 12");
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn device(&self, name: &str) -> Option<DeviceDescriptor> {
         let inner = self.inner.upgrade()?;
         let device = inner.device(name)?;

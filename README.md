@@ -14,7 +14,7 @@ Playwright is a rust library to automate [Chromium](https://www.chromium.org/Hom
 ## Installation
 ```
 [dependencies]
-playwright = { url = "https://github.com/sctg-development/playwright-rust" branch = "master" }
+playwright = { url = "https://github.com/sctg-development/playwright-rust", branch = "master" }
 ```
 
 ## Usage
@@ -22,19 +22,47 @@ playwright = { url = "https://github.com/sctg-development/playwright-rust" branc
 use playwright::Playwright;
 
 #[tokio::main]
-async fn main() -> Result<(), playwright::Error> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize Playwright and install browsers if needed
     let playwright = Playwright::initialize().await?;
-    playwright.prepare()?; // Install browsers
+    playwright.prepare()?;
+
+    // Launch a headless Chromium browser
     let chromium = playwright.chromium();
-    let browser = chromium.launcher().headless(true).launch().await?;
+    let browser = chromium.launcher().headless(true).launch().await?; // Use .headless(false) to see the browser
+
+    // Create a new browser context and page
     let context = browser.context_builder().build().await?;
     let page = context.new_page().await?;
-    page.goto_builder("https://example.com/").goto().await?;
 
-    // Exec in browser and Deserialize with serde
-    let s: String = page.eval("() => location.href").await?;
-    assert_eq!(s, "https://example.com/");
-    page.click_builder("a").click().await?;
+    // Navigate to the GitHub Pages documentation
+    page.goto_builder("https://sctg-development.github.io/playwright-rust/playwright/")
+        .goto()
+        .await?;
+
+    // Execute JavaScript to get the current URL
+    let url: String = page.eval("() => location.href").await?;
+    println!("Current URL: {}", url);
+
+    // Click on the API documentation link
+    page.click_builder(r#"a[title="mod playwright::api"]"#)
+        .click()
+        .await?;
+
+    // Extract the version number from the documentation page
+    let version: String = page
+        .eval(r#"() => document.querySelector("span.version").innerText.trim()"#)
+        .await?;
+    println!("Package version: {}", version);
+
+    // Verify we're on the correct page
+    assert_eq!(
+        page.url().unwrap(),
+        "https://sctg-development.github.io/playwright-rust/playwright/api/index.html"
+    );
+
+    // Clean up - browser context and page are automatically closed when dropped
+    browser.close().await?;
     Ok(())
 }
 ```
