@@ -3,14 +3,14 @@ use crate::{
     imp::{
         core::*,
         prelude::*,
-        route::{ContinueArgs, FulfillArgs, Route as Impl}
-    }
+        route::{ContinueArgs, FulfillArgs, Route as Impl},
+    },
 };
 
 /// Whenever a network route is set up with [`method: Page.route`] or [`method: BrowserContext.route`], the `Route` object
 /// allows to handle the route.
 pub struct Route {
-    inner: Weak<Impl>
+    inner: Weak<Impl>,
 }
 
 impl PartialEq for Route {
@@ -24,7 +24,9 @@ impl PartialEq for Route {
 }
 
 impl Route {
-    fn new(inner: Weak<Impl>) -> Self { Self { inner } }
+    fn new(inner: Weak<Impl>) -> Self {
+        Self { inner }
+    }
 
     /// A request to be routed.
     pub fn request(&self) -> Request {
@@ -70,7 +72,7 @@ impl Route {
     pub async fn fulfill_builder<'a>(
         &self,
         body: &'a str,
-        is_base64: bool
+        is_base64: bool,
     ) -> FulfillBuilder<'a, '_> {
         FulfillBuilder::new(self.inner.clone(), body, is_base64)
     }
@@ -95,7 +97,7 @@ impl Route {
 
 pub struct FulfillBuilder<'a, 'b> {
     inner: Weak<Impl>,
-    args: FulfillArgs<'a, 'b>
+    args: FulfillArgs<'a, 'b>,
 }
 
 impl<'a, 'b> FulfillBuilder<'a, 'b> {
@@ -112,7 +114,7 @@ impl<'a, 'b> FulfillBuilder<'a, 'b> {
     /// Response headers. Header values will be converted to a string.
     pub fn headers<T>(mut self, x: T) -> Self
     where
-        T: IntoIterator<Item = (String, String)>
+        T: IntoIterator<Item = (String, String)>,
     {
         self.args.headers = Some(x.into_iter().map(Header::from).collect());
         self
@@ -133,7 +135,7 @@ impl<'a, 'b> FulfillBuilder<'a, 'b> {
 
 pub struct ContinueBuilder<'a, 'b, 'c> {
     inner: Weak<Impl>,
-    args: ContinueArgs<'a, 'b, 'c>
+    args: ContinueArgs<'a, 'b, 'c>,
 }
 
 impl<'a, 'b, 'c> ContinueBuilder<'a, 'b, 'c> {
@@ -150,7 +152,7 @@ impl<'a, 'b, 'c> ContinueBuilder<'a, 'b, 'c> {
     /// If set changes the request HTTP headers. Header values will be converted to a string.
     pub fn headers<T>(mut self, x: T) -> Self
     where
-        T: IntoIterator<Item = (String, String)>
+        T: IntoIterator<Item = (String, String)>,
     {
         self.args.headers = Some(x.into_iter().map(Header::from).collect());
         self
@@ -168,5 +170,76 @@ impl<'a, 'b, 'c> ContinueBuilder<'a, 'b, 'c> {
     pub fn clear_headers(mut self) -> Self {
         self.args.headers = None;
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::imp::route::Route as Impl;
+    use std::sync::Weak;
+
+    #[test]
+    fn test_fulfill_builder_headers_and_setters() {
+        let inner: Weak<Impl> = Weak::new();
+        let b = FulfillBuilder::new(inner, "hello", false)
+            .headers(vec![("foo".to_string(), "bar".to_string())])
+            .content_type("text/plain")
+            .status(404);
+
+        // Verify args captured by builder (fields with pub(crate) visibility)
+        assert_eq!(b.args.content_type, Some("text/plain"));
+        assert_eq!(b.args.status, Some(404));
+        assert_eq!(
+            b.args.headers.clone().unwrap(),
+            vec![Header::from(("foo".to_string(), "bar".to_string()))]
+        );
+
+        let b = b.clear_headers();
+        assert!(b.args.headers.is_none());
+    }
+
+    #[test]
+    fn test_continue_builder_headers_and_setters() {
+        let inner: Weak<Impl> = Weak::new();
+        let b = ContinueBuilder::new(inner)
+            .headers(vec![("x".to_string(), "y".to_string())])
+            .method("POST")
+            .post_data("payload")
+            .url("https://example.org");
+
+        assert_eq!(b.args.method, Some("POST"));
+        assert_eq!(b.args.post_data, Some("payload"));
+        assert_eq!(b.args.url, Some("https://example.org"));
+        assert_eq!(
+            b.args.headers.clone().unwrap(),
+            vec![Header::from(("x".to_string(), "y".to_string()))]
+        );
+
+        let b = b.clear_headers();
+        assert!(b.args.headers.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_fulfill_and_continue_fail_on_no_inner() {
+        let inner: Weak<Impl> = Weak::new();
+        let b = FulfillBuilder::new(inner.clone(), "body", false);
+        // fulfill should error because there's no inner implementation (upgrade fails)
+        assert!(b.fulfill().await.is_err());
+
+        let cb = ContinueBuilder::new(inner);
+        assert!(cb.r#continue().await.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_route_abort_and_request_on_no_inner() {
+        let route = Route::new(Weak::new());
+
+        // abort should return Err because inner cannot be upgraded
+        assert!(route.abort(None).await.is_err());
+
+        // request returns a Request wrapper even when inner can't be upgraded; calling url() should fail
+        let request = route.request();
+        assert!(request.url().is_err());
     }
 }
