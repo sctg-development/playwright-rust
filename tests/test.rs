@@ -2,6 +2,7 @@ mod browser;
 mod browser_context;
 mod browser_type;
 mod devices;
+mod integration;
 mod page;
 mod selectors;
 
@@ -36,6 +37,10 @@ playwright::runtime_test!(chromium_selectors, selectors(Which::Chromium).await);
 playwright::runtime_test!(firefox_selectors, selectors(Which::Firefox).await);
 // playwright::runtime_test!(webkit_selectors, selectors(Which::Webkit).await);
 
+playwright::runtime_test!(chromium_integration, integration(Which::Chromium).await);
+playwright::runtime_test!(firefox_integration, integration(Which::Firefox).await);
+// playwright::runtime_test!(webkit_integration, integration(Which::Webkit).await);
+
 // NOTE: chromium_devices, firefox_devices, and connect_over_cdp tests are disabled
 // because they depend on playwright.device() which is not initialized in this version
 // These are integration tests that require specific setup and are not critical for publishing
@@ -67,6 +72,12 @@ async fn selectors(which: Which) {
     selectors::all(&playwright, which).await;
 }
 
+async fn integration(which: Which) {
+    let playwright = playwright_with_driver().await;
+    install_browser(&playwright, which);
+    integration::all(which).await;
+}
+
 async fn devices(which: Which) {
     let port = free_local_port().unwrap();
     start_test_server(port).await;
@@ -75,7 +86,7 @@ async fn devices(which: Which) {
     devices::all(&playwright, port, which).await;
 }
 
-fn install_browser(p: &Playwright, which: Which) {
+pub fn install_browser(p: &Playwright, which: Which) {
     match which {
         Which::Webkit => p.install_webkit(),
         Which::Firefox => p.install_firefox(),
@@ -84,7 +95,7 @@ fn install_browser(p: &Playwright, which: Which) {
     .unwrap();
 }
 
-async fn playwright_with_driver() -> Playwright {
+pub async fn playwright_with_driver() -> Playwright {
     use playwright::Driver;
     let driver = Driver::new(Driver::default_dest());
     let mut playwright = Playwright::with_driver(driver).await.unwrap();
